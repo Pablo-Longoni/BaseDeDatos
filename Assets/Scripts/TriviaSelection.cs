@@ -10,8 +10,8 @@ using UnityEngine.SceneManagement;
 
 public class TriviaSelection : MonoBehaviour
 {
-    string supabaseUrl = "url"; //COMPLETAR
-    string supabaseKey = "key"; //COMPLETAR
+    string supabaseUrl = "https://rkzngebjesgwjwywjbxc.supabase.co"; //COMPLETAR
+    string supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrem5nZWJqZXNnd2p3eXdqYnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc0MTkwNzEsImV4cCI6MjA1Mjk5NTA3MX0.MHQdqXGZsd9XG_1mTySm8O7C1qhXoDrRIEAnCK8BXSw"; //COMPLETAR
 
     Supabase.Client clientSupabase;
 
@@ -19,13 +19,14 @@ public class TriviaSelection : MonoBehaviour
     [SerializeField] TMP_Dropdown _dropdown;
 
     public DatabaseManager databaseManager;
-
+    public GameManager gameManager;
     async void Start()
     {
         clientSupabase = new Supabase.Client(supabaseUrl, supabaseKey);
 
         await SelectTrivias();
         PopulateDropdown();
+      //  gameManager.answeredQuestions.Clear();
     }
 
     async Task SelectTrivias()

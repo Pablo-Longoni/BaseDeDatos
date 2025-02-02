@@ -6,6 +6,7 @@ using Postgrest.Models;
 using TMPro;
 using UnityEngine.UI;
 using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
 
 public class SupabaseManager : MonoBehaviour
 
@@ -16,8 +17,8 @@ public class SupabaseManager : MonoBehaviour
     [SerializeField] TMP_InputField _userPassInput;
     [SerializeField] TextMeshProUGUI _stateText;
 
-    string supabaseUrl = "url"; //COMPLETAR
-    string supabaseKey = "key"; //COMPLETAR
+    string supabaseUrl = "https://rkzngebjesgwjwywjbxc.supabase.co"; //COMPLETAR
+    string supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrem5nZWJqZXNnd2p3eXdqYnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc0MTkwNzEsImV4cCI6MjA1Mjk5NTA3MX0.MHQdqXGZsd9XG_1mTySm8O7C1qhXoDrRIEAnCK8BXSw";
 
     Supabase.Client clientSupabase;
 
@@ -51,6 +52,8 @@ public class SupabaseManager : MonoBehaviour
             print("LOGIN SUCCESSFUL");
             _stateText.text = "LOGIN SUCCESSFUL";
             _stateText.color = Color.green;
+            SaveUserIdToPlayerPrefs();
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
         else
         {
@@ -66,6 +69,9 @@ public class SupabaseManager : MonoBehaviour
         // Initialize the Supabase client
         clientSupabase = new Supabase.Client(supabaseUrl, supabaseKey);
 
+       // Debug.Log(clientSupabase == null ? "Client no inicializado" : "Client inicializado correctamente");
+
+
         // Consultar el último id utilizado (ID = index)
         var ultimoId = await clientSupabase
             .From<usuarios>()
@@ -75,9 +81,9 @@ public class SupabaseManager : MonoBehaviour
 
         int nuevoId = 1; // Valor predeterminado si la tabla está vacía
 
-        if (ultimoId != null)
+        if (ultimoId.Models != null && ultimoId.Models.Count > 0)
         {
-            nuevoId = ultimoId.Model.id + 1; // Incrementar el último id
+            nuevoId = ultimoId.Models[0].id + 1; ; // Incrementar el último id
         }
 
         // Crear el nuevo usuario con el nuevo id
@@ -102,6 +108,8 @@ public class SupabaseManager : MonoBehaviour
         {
             _stateText.text = "Usuario Correctamente Ingresado";
             _stateText.color = Color.green;
+            SaveUserIdToPlayerPrefs();
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
         else
         {
@@ -111,5 +119,28 @@ public class SupabaseManager : MonoBehaviour
         }
 
     }
+
+      async void SaveUserIdToPlayerPrefs()
+    {
+        var userResponse = await clientSupabase
+         .From<usuarios>()
+         .Select("id")
+         .Where(usuarios => usuarios.username == _userIDInput.text)
+         .Get();
+
+        if (userResponse.Models.Count > 0)
+        {
+            string userId = userResponse.Models[0].id.ToString();
+            PlayerPrefs.SetString("UserId", userId);
+            Debug.Log("Usuario ID guardado: " + userId);
+            PlayerPrefs.Save();
+        }
+        else
+        {
+            Debug.LogError("No se pudo encontrar el ID del usuario.");
+        }
+    }
+
+
 }
 

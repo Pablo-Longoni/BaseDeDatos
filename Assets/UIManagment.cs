@@ -4,7 +4,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-
+using System.Threading.Tasks;
 public class UIManagment : MonoBehaviour
 {
 
@@ -26,7 +26,17 @@ public class UIManagment : MonoBehaviour
 
     public static UIManagment Instance { get; private set; }
 
+    [SerializeField] GameObject StatPanel;
+    private bool statsSaved = false;
 
+    [SerializeField] PointsUI PointsUI;
+    [SerializeField] private TimerUI timerUI;
+    [SerializeField] QaUI QaUI;
+    [SerializeField] private int points;
+    [SerializeField] private int questionAnswered;
+    [SerializeField] private TextMeshProUGUI messeage;
+    [SerializeField] private TextMeshProUGUI pointsStat;
+    [SerializeField] private TextMeshProUGUI answeredStat;
     void Awake()
     {
         // Configura la instancia
@@ -49,39 +59,86 @@ public class UIManagment : MonoBehaviour
 
         _originalButtonColor = _buttons[0].GetComponent<Image>().color;
 
+        timerUI.ResetTimer();
+
+        StatPanel.SetActive(false);
     }
 
     void Update()
     {
-        _categoryText.text = PlayerPrefs.GetString("SelectedTrivia");
-        _questionText.text = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].QuestionText;
+        if ( GameManager.Instance.randomQuestionIndex == -1)
+        {
+          //  PreviousScene();
+            ShowStats();
+           // Debug.Log("Stats guardadas en Update UImanagement");
+        }
+        else if (GameManager.Instance != null && GameManager.Instance.responseList != null && GameManager.Instance.responseList.Count > 0)
+        {
+            _categoryText.text = PlayerPrefs.GetString("SelectedTrivia");
+            _questionText.text = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].QuestionText;
 
-        GameManager.Instance.CategoryAndQuestionQuery(queryCalled);
-
+            GameManager.Instance.CategoryAndQuestionQuery(queryCalled);
+        }
+        else
+        {
+            // Debug.Log("Esperando a que los datos de la trivia se carguen");
+        }
     }
+  
     public void OnButtonClick(int buttonIndex)
     {
-        
-        string selectedAnswer = _buttons[buttonIndex].GetComponentInChildren<TextMeshProUGUI>().text;
+        string selectedAnswer = _buttons[buttonIndex].GetComponentInChildren<TextMeshProUGUI>().text.Trim();
 
-        _correctAnswer = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].CorrectOption;
+        // Obtén el índice de la respuesta correcta desde la base de datos, ajustado a 0 (basado en 1)
+        int correctIndex = int.Parse(GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].CorrectOption) - 1;
 
-        if (selectedAnswer == _correctAnswer)
+        // Asigna la respuesta correcta desde la lista de respuestas
+        _correctAnswer = GameManager.Instance._answers[correctIndex].Trim();
+
+        Debug.Log($"SelectedAnswer: '{selectedAnswer}' | CorrectAnswer: '{_correctAnswer}'");
+
+        // Compara las respuestas ignorando mayúsculas y minúsculas
+        if (selectedAnswer == _correctAnswer)//string.Equals(selectedAnswer, _correctAnswer, System.StringComparison.OrdinalIgnoreCase))
         {
+            timerUI.isTimerRunning = false;
             Debug.Log("¡Respuesta correcta!");
             ChangeButtonColor(buttonIndex, Color.green);
             Invoke("RestoreButtonColor", 2f);
             GameManager.Instance._answers.Clear();
-            Invoke("NextAnswer", 2f);
-            
+            Invoke("NextQuestion", 2f);
+            PointsUI.IncreasePoints();
+            QaUI.IncreaseQA();
+            Debug.Log($"Respuesta correcta. CorrectAnswer: {_correctAnswer}, SelectedAnswer: {selectedAnswer}");
         }
         else
         {
-            Debug.Log("Respuesta incorrecta. Inténtalo de nuevo.");
-            
+            Debug.Log("Respuesta incorrecta. Inténtalo de nuevo." + _correctAnswer + selectedAnswer);
+
             ChangeButtonColor(buttonIndex, Color.red);
             Invoke("RestoreButtonColor", 2f);
+           // PreviousScene();
+            ShowStats();
         }
+        /* string selectedAnswer = _buttons[buttonIndex].GetComponentInChildren<TextMeshProUGUI>().text;
+
+         _correctAnswer = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].CorrectOption;
+
+         if (selectedAnswer == _correctAnswer)
+         {
+             Debug.Log("¡Respuesta correcta!");
+             ChangeButtonColor(buttonIndex, Color.green);
+             Invoke("RestoreButtonColor", 2f);
+             GameManager.Instance._answers.Clear();
+             Invoke("NextAnswer", 2f);
+
+         }
+         else
+         {
+             Debug.Log("Respuesta incorrecta. Inténtalo de nuevo." + _correctAnswer + selectedAnswer);
+
+             ChangeButtonColor(buttonIndex, Color.red);
+             Invoke("RestoreButtonColor", 2f);
+         }*/
 
 
     }
@@ -101,18 +158,75 @@ public class UIManagment : MonoBehaviour
         }
     }
 
-    private void NextAnswer()
+    private void NextQuestion()
     {
         queryCalled = false;
+        timerUI.ResetTimer();
     }
 
-    public void PreviousScene()
+    public void OnTimerExpired()
+    {
+        Debug.Log("El tiempo para responder se agotooooooo.");
+        // PreviousScene();
+        ShowStats();
+        Debug.Log("stats guardadas OnTimerExpired");
+    }
+
+   /* public async void PreviousScene()
     {
         Destroy(GameManager.Instance);
         Destroy(UIManagment.Instance);
-
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+        await   GameManager.Instance.SavePlayerStats(points, questionAnswered);
+    }*/
+
+    public async void ShowStats()
+    {
+        if (statsSaved) return; // Evitar ejecución repetida
+        statsSaved = true;
+
+        timerUI.isTimerRunning = false;
+
+        float currentPoints = PointsUI.GetPoints();
+        int currentQuestionsAnswered = QaUI.GetQuestionsAnswered();
+
+        Debug.Log("Current Points: " + currentPoints);
+        Debug.Log("Current Questions Answered: " + currentQuestionsAnswered);
+
+        pointsStat.text = currentPoints.ToString() ;
+        answeredStat.text = $"{currentQuestionsAnswered.ToString()}" + "/10";
+
+   
+
+        await Task.Delay(500);
+
+        StatPanel.SetActive(true);
+
+
+        if (QaUI.questionsAnswered == 2)
+        {
+            messeage.text = "GANASTE";
+        }
+        else
+        {
+            messeage.text = "PERDISTE";
+        }
+
+        await GameManager.Instance.SavePlayerStats(points, questionAnswered);
+
+       // await Task.Delay(3000);
+        Destroy(GameManager.Instance);
+        Destroy(UIManagment.Instance);
     }
 
+    public void ShowRankings()
+    {
+        // Si quieres mostrar el ranking global
+        RankingUI.Instance.DisplayGlobalRanking();
+
+        // O mostrar el ranking de una trivia específica (por ejemplo, con el ID 1)
+         
+        RankingUI.Instance.DisplayTriviaRanking(1);
+    }
 
 }

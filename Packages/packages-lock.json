@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b93741e2b5fe9073e169853ade0039c7cf2595f0"
+      "hash": "5764d44d4232c8ea628549137559050ea6f6dc10"
     },
     "com.unity.collab-proxy": {
       "version": "2.3.1",
@@ -132,9 +132,9 @@
       "depth": 0,
       "source": "registry",
       "dependencies": {
+        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.director": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
-        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0"
       },
       "url": "https://packages.unity.com"
