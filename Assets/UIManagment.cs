@@ -5,13 +5,15 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Threading.Tasks;
+using UnityEngine.Networking;
+using static System.Net.WebRequestMethods;
 public class UIManagment : MonoBehaviour
 {
 
-    
+
     [SerializeField] TextMeshProUGUI _categoryText;
     [SerializeField] TextMeshProUGUI _questionText;
-    
+
     string _correctAnswer;
 
     public Button[] _buttons = new Button[3];
@@ -37,6 +39,9 @@ public class UIManagment : MonoBehaviour
     [SerializeField] private TextMeshProUGUI messeage;
     [SerializeField] private TextMeshProUGUI pointsStat;
     [SerializeField] private TextMeshProUGUI answeredStat;
+
+    [SerializeField] private Image questionImage;
+    [SerializeField] private TextMeshProUGUI questionText;
     void Awake()
     {
         // Configura la instancia
@@ -52,7 +57,6 @@ public class UIManagment : MonoBehaviour
 
     }
 
-
     private void Start()
     {
         queryCalled = false;
@@ -66,11 +70,11 @@ public class UIManagment : MonoBehaviour
 
     void Update()
     {
-        if ( GameManager.Instance.randomQuestionIndex == -1)
+      /*  if (GameManager.Instance.randomQuestionIndex == -1)
         {
-          //  PreviousScene();
+            //  PreviousScene();
             ShowStats();
-           // Debug.Log("Stats guardadas en Update UImanagement");
+            // Debug.Log("Stats guardadas en Update UImanagement");
         }
         else if (GameManager.Instance != null && GameManager.Instance.responseList != null && GameManager.Instance.responseList.Count > 0)
         {
@@ -82,9 +86,21 @@ public class UIManagment : MonoBehaviour
         else
         {
             // Debug.Log("Esperando a que los datos de la trivia se carguen");
+        }*/
+
+
+        if (GameManager.Instance.randomQuestionIndex == -1)
+        {
+            ShowStats();
+        }
+        else if (GameManager.Instance != null && GameManager.Instance.responseList != null && GameManager.Instance.responseList.Count > 0)
+        {
+            _categoryText.text = PlayerPrefs.GetString("SelectedTrivia");
+            _questionText.text = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].QuestionText;
+            GameManager.Instance.CategoryAndQuestionQuery(queryCalled);
         }
     }
-  
+
     public void OnButtonClick(int buttonIndex)
     {
         string selectedAnswer = _buttons[buttonIndex].GetComponentInChildren<TextMeshProUGUI>().text.Trim();
@@ -108,7 +124,6 @@ public class UIManagment : MonoBehaviour
             Invoke("NextQuestion", 2f);
             PointsUI.IncreasePoints();
             QaUI.IncreaseQA();
-            Debug.Log($"Respuesta correcta. CorrectAnswer: {_correctAnswer}, SelectedAnswer: {selectedAnswer}");
         }
         else
         {
@@ -116,7 +131,7 @@ public class UIManagment : MonoBehaviour
 
             ChangeButtonColor(buttonIndex, Color.red);
             Invoke("RestoreButtonColor", 2f);
-           // PreviousScene();
+            // PreviousScene();
             ShowStats();
         }
         /* string selectedAnswer = _buttons[buttonIndex].GetComponentInChildren<TextMeshProUGUI>().text;
@@ -162,6 +177,9 @@ public class UIManagment : MonoBehaviour
     {
         queryCalled = false;
         timerUI.ResetTimer();
+        questionImage.sprite = null;
+        questionImage.gameObject.SetActive(false);
+        questionText.rectTransform.anchoredPosition = new Vector2(28, 310);
     }
 
     public void OnTimerExpired()
@@ -172,16 +190,17 @@ public class UIManagment : MonoBehaviour
         Debug.Log("stats guardadas OnTimerExpired");
     }
 
-   /* public async void PreviousScene()
-    {
-        Destroy(GameManager.Instance);
-        Destroy(UIManagment.Instance);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
-        await   GameManager.Instance.SavePlayerStats(points, questionAnswered);
-    }*/
+    /* public async void PreviousScene()
+     {
+         Destroy(GameManager.Instance);
+         Destroy(UIManagment.Instance);
+         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+         await   GameManager.Instance.SavePlayerStats(points, questionAnswered);
+     }*/
 
     public async void ShowStats()
     {
+        questionImage.gameObject.SetActive(false);
         if (statsSaved) return; // Evitar ejecución repetida
         statsSaved = true;
 
@@ -193,17 +212,17 @@ public class UIManagment : MonoBehaviour
         Debug.Log("Current Points: " + currentPoints);
         Debug.Log("Current Questions Answered: " + currentQuestionsAnswered);
 
-        pointsStat.text = currentPoints.ToString() ;
+        pointsStat.text = currentPoints.ToString("F3");
         answeredStat.text = $"{currentQuestionsAnswered.ToString()}" + "/10";
 
-   
+
 
         await Task.Delay(500);
 
         StatPanel.SetActive(true);
 
 
-        if (QaUI.questionsAnswered == 2)
+        if (QaUI.questionsAnswered == 10)
         {
             messeage.text = "GANASTE";
         }
@@ -214,7 +233,7 @@ public class UIManagment : MonoBehaviour
 
         await GameManager.Instance.SavePlayerStats(points, questionAnswered);
 
-       // await Task.Delay(3000);
+        // await Task.Delay(3000);
         Destroy(GameManager.Instance);
         Destroy(UIManagment.Instance);
     }
@@ -225,8 +244,52 @@ public class UIManagment : MonoBehaviour
         RankingUI.Instance.DisplayGlobalRanking();
 
         // O mostrar el ranking de una trivia específica (por ejemplo, con el ID 1)
-         
+
         RankingUI.Instance.DisplayTriviaRanking(1);
+    }
+
+    public void LoadImageForCurrentQuestion()
+    {
+        if (GameManager.Instance.responseList != null && GameManager.Instance.responseList.Count > GameManager.Instance.randomQuestionIndex)
+        {
+            string imageUrl = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].Image_url;
+
+            Debug.Log($"Intentando cargar imagen para la pregunta: {GameManager.Instance.randomQuestionIndex}, URL: {imageUrl}");
+
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                StartCoroutine(LoadQuestionImage(imageUrl));
+                questionText.rectTransform.anchoredPosition = new Vector2(28, 31);
+            }
+            else
+            {
+                questionImage.gameObject.SetActive(false);
+                Debug.Log("No hay imagen para esta pregunta.");
+                questionImage.sprite = null;
+            }
+        }
+        else
+        {
+            Debug.LogError("Error: El índice de la pregunta está fuera de rango o la lista de preguntas es nula.");
+        }
+    }
+
+    private IEnumerator LoadQuestionImage(string url)
+    {
+        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            questionImage.gameObject.SetActive(false); // Asegurar que se oculta antes de actualizar
+            Texture2D texture = DownloadHandlerTexture.GetContent(request);
+            questionImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            questionImage.gameObject.SetActive(true); // Se vuelve a activar
+        }
+        else
+        {
+            questionImage.gameObject.SetActive(false); // En caso de error, asegurarse de que la imagen no aparezca
+        }
     }
 
 }

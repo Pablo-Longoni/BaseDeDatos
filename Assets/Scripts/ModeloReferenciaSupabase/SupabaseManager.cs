@@ -50,15 +50,16 @@ public class SupabaseManager : MonoBehaviour
         if (login_password.Model.password.Equals(_userPassInput.text))
         {
             print("LOGIN SUCCESSFUL");
-            _stateText.text = "LOGIN SUCCESSFUL";
+            _stateText.text = "LOGIN EXITOSO";
             _stateText.color = Color.green;
             SaveUserIdToPlayerPrefs();
+            await Task.Delay(400);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
         else
         {
             print("WRONG PASSWORD");
-            _stateText.text = "WRONG PASSWORD";
+            _stateText.text = "CONTRASEÑA INCORRECTA";
             _stateText.color = Color.red;
         }
     }
@@ -69,9 +70,30 @@ public class SupabaseManager : MonoBehaviour
         // Initialize the Supabase client
         clientSupabase = new Supabase.Client(supabaseUrl, supabaseKey);
 
-       // Debug.Log(clientSupabase == null ? "Client no inicializado" : "Client inicializado correctamente");
+        // Verficar si los campos estan sin completar
+        if (string.IsNullOrEmpty(_userIDInput.text) || string.IsNullOrEmpty(_userPassInput.text))
+        {
+            _stateText.text = "Complete usuario y contraseña.";
+            _stateText.color = Color.red;
+            return; 
+        }
+
+        // Verificar si el usuario ya existe
+        var consultaUsuario = await clientSupabase
+            .From<usuarios>()
+            .Select("*")
+            .Where(u => u.username == _userIDInput.text)
+            .Get();
+
+        if (consultaUsuario.Models != null && consultaUsuario.Models.Count > 0)
+        {
+            _stateText.text = "El nombre de usuario ya está en uso.";
+            _stateText.color = Color.red;
+            return; // Se evita la inserción
+        }
 
 
+        // Debug.Log(clientSupabase == null ? "Client no inicializado" : "Client inicializado correctamente");
         // Consultar el último id utilizado (ID = index)
         var ultimoId = await clientSupabase
             .From<usuarios>()
@@ -109,6 +131,7 @@ public class SupabaseManager : MonoBehaviour
             _stateText.text = "Usuario Correctamente Ingresado";
             _stateText.color = Color.green;
             SaveUserIdToPlayerPrefs();
+            await Task.Delay(400);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
         else
@@ -117,7 +140,6 @@ public class SupabaseManager : MonoBehaviour
             _stateText.text = resultado.ResponseMessage.ToString();
             _stateText.color = Color.green;
         }
-
     }
 
       async void SaveUserIdToPlayerPrefs()

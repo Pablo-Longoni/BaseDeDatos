@@ -96,7 +96,7 @@ public class RankingUI : MonoBehaviour
             // Obtener el nombre del usuario usando el usuarios_id
             string username = await GameManager.Instance.GetUsernameById(stat.usuarios_id);
            // rankingText.text += $"{username}: {stat.points}  puntos\n";
-            rankingText.text += $"{username}: {stat.points}\n";
+            rankingText.text += $"{username}: {stat.points.ToString("F3")}\n";
         }
     }
 
@@ -119,7 +119,7 @@ public class RankingUI : MonoBehaviour
             // Obtener el nombre del usuario usando el usuarios_id
             string username = await GameManager.Instance.GetUsernameById(stat.usuarios_id);
          //   rankingText.text += $"{username}: {stat.points} puntos\n";
-            rankingText.text += $"{username}: {stat.points}\n";
+            rankingText.text += $"{username}: {stat.points.ToString("F3")}\n";
         }
     }
 } 

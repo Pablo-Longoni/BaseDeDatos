@@ -28,7 +28,7 @@ public class TimerUI : MonoBehaviour
         initialWidth = timerBar.sizeDelta.x;
         if (initialWidth <= 0)
         {
-            initialWidth = 800f; // Valor por defecto si no tiene ancho en el Inspector
+            initialWidth = 1000f; // Valor por defecto si no tiene ancho en el Inspector
             timerBar.sizeDelta = new Vector2(initialWidth, timerBar.sizeDelta.y);
         }
         ResetTimer();
@@ -74,7 +74,7 @@ public class TimerUI : MonoBehaviour
         timer = Mathf.Max(0, timer);
         isTimerRunning = true;
         UpdateTimerUI();
-        initialWidth = 800f;
+        initialWidth = 1000f;
         if (blinkingCoroutine != null)
         {
             StopCoroutine(blinkingCoroutine);
@@ -101,11 +101,6 @@ public class TimerUI : MonoBehaviour
 
     private void UpdateTimerUI()
     {
-       /* if (timerText != null)
-        {
-            timerText.text = $"{Mathf.RoundToInt(timer)}";
-            UpdateBar();
-        }*/
         UpdateBar();
     }
 
