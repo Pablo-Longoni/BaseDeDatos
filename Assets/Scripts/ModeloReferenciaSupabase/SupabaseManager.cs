@@ -30,6 +30,12 @@ public class SupabaseManager : MonoBehaviour
         // Initialize the Supabase client
         clientSupabase = new Supabase.Client(supabaseUrl, supabaseKey);
 
+        if (string.IsNullOrEmpty(_userIDInput.text) || string.IsNullOrEmpty(_userPassInput.text))
+        {
+            _stateText.text = "Complete usuario y contraseña.";
+            _stateText.color = new Color(0.9f, 0.3f, 0.3f);
+            return;
+        }
         // prueba
         var test_response = await clientSupabase
             .From<usuarios>()
@@ -50,8 +56,8 @@ public class SupabaseManager : MonoBehaviour
         if (login_password.Model.password.Equals(_userPassInput.text))
         {
             print("LOGIN SUCCESSFUL");
-            _stateText.text = "LOGIN EXITOSO";
-            _stateText.color = Color.green;
+            _stateText.text = "Login exitoso";
+            _stateText.color = new Color(0.3f, 0.9f, 0.3f);
             SaveUserIdToPlayerPrefs();
             await Task.Delay(400);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -59,8 +65,8 @@ public class SupabaseManager : MonoBehaviour
         else
         {
             print("WRONG PASSWORD");
-            _stateText.text = "CONTRASEÑA INCORRECTA";
-            _stateText.color = Color.red;
+            _stateText.text = "Contraseña incorrecta";
+            _stateText.color = new Color(0.9f, 0.3f, 0.3f);
         }
     }
 
@@ -74,7 +80,7 @@ public class SupabaseManager : MonoBehaviour
         if (string.IsNullOrEmpty(_userIDInput.text) || string.IsNullOrEmpty(_userPassInput.text))
         {
             _stateText.text = "Complete usuario y contraseña.";
-            _stateText.color = Color.red;
+            _stateText.color = new Color(0.9f, 0.3f, 0.3f);
             return; 
         }
 
@@ -87,8 +93,8 @@ public class SupabaseManager : MonoBehaviour
 
         if (consultaUsuario.Models != null && consultaUsuario.Models.Count > 0)
         {
-            _stateText.text = "El nombre de usuario ya está en uso.";
-            _stateText.color = Color.red;
+            _stateText.text = "El nombre de usuario ya está en uso";
+            _stateText.color = new Color(0.9f, 0.3f, 0.3f);
             return; // Se evita la inserción
         }
 
@@ -129,7 +135,7 @@ public class SupabaseManager : MonoBehaviour
         if (resultado.ResponseMessage.IsSuccessStatusCode)
         {
             _stateText.text = "Usuario Correctamente Ingresado";
-            _stateText.color = Color.green;
+            _stateText.color = new Color(0.3f, 0.9f, 0.3f);
             SaveUserIdToPlayerPrefs();
             await Task.Delay(400);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -138,7 +144,7 @@ public class SupabaseManager : MonoBehaviour
         {
             _stateText.text = "Error en el registro de usuario";
             _stateText.text = resultado.ResponseMessage.ToString();
-            _stateText.color = Color.green;
+            _stateText.color = new Color(0.3f, 0.9f, 0.3f);
         }
     }
 

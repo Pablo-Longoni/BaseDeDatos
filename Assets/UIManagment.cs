@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
 using static System.Net.WebRequestMethods;
+using System;
 public class UIManagment : MonoBehaviour
 {
 
@@ -42,6 +43,7 @@ public class UIManagment : MonoBehaviour
 
     [SerializeField] private Image questionImage;
     [SerializeField] private TextMeshProUGUI questionText;
+    int correctIndex;
     void Awake()
     {
         // Configura la instancia
@@ -70,25 +72,6 @@ public class UIManagment : MonoBehaviour
 
     void Update()
     {
-      /*  if (GameManager.Instance.randomQuestionIndex == -1)
-        {
-            //  PreviousScene();
-            ShowStats();
-            // Debug.Log("Stats guardadas en Update UImanagement");
-        }
-        else if (GameManager.Instance != null && GameManager.Instance.responseList != null && GameManager.Instance.responseList.Count > 0)
-        {
-            _categoryText.text = PlayerPrefs.GetString("SelectedTrivia");
-            _questionText.text = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].QuestionText;
-
-            GameManager.Instance.CategoryAndQuestionQuery(queryCalled);
-        }
-        else
-        {
-            // Debug.Log("Esperando a que los datos de la trivia se carguen");
-        }*/
-
-
         if (GameManager.Instance.randomQuestionIndex == -1)
         {
             ShowStats();
@@ -103,59 +86,42 @@ public class UIManagment : MonoBehaviour
 
     public void OnButtonClick(int buttonIndex)
     {
+        //Se extrae el texto del botón seleccionado y se almacena en selectedAnswer
         string selectedAnswer = _buttons[buttonIndex].GetComponentInChildren<TextMeshProUGUI>().text.Trim();
 
         // Obtén el índice de la respuesta correcta desde la base de datos, ajustado a 0 (basado en 1)
         int correctIndex = int.Parse(GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].CorrectOption) - 1;
 
+        if (correctIndex < 0 || correctIndex >= GameManager.Instance._answers.Count)
+        {
+            Debug.LogError($"El índice correcto {correctIndex} está fuera de rango. Tamaño de _answers: {GameManager.Instance._answers.Count}");
+            return;
+        }
         // Asigna la respuesta correcta desde la lista de respuestas
         _correctAnswer = GameManager.Instance._answers[correctIndex].Trim();
 
+        Debug.Log($"Tamaño de _answerss: {GameManager.Instance._answers.Count}");
         Debug.Log($"SelectedAnswer: '{selectedAnswer}' | CorrectAnswer: '{_correctAnswer}'");
 
         // Compara las respuestas ignorando mayúsculas y minúsculas
-        if (selectedAnswer == _correctAnswer)//string.Equals(selectedAnswer, _correctAnswer, System.StringComparison.OrdinalIgnoreCase))
+        if (selectedAnswer == _correctAnswer)
         {
             timerUI.isTimerRunning = false;
             Debug.Log("¡Respuesta correcta!");
-            ChangeButtonColor(buttonIndex, Color.green);
+            ChangeButtonColor(buttonIndex, new Color(0.3f, 0.9f, 0.3f));
             Invoke("RestoreButtonColor", 2f);
-            GameManager.Instance._answers.Clear();
-            Invoke("NextQuestion", 2f);
             PointsUI.IncreasePoints();
             QaUI.IncreaseQA();
+            Invoke("NextQuestion",2f);
         }
         else
         {
             Debug.Log("Respuesta incorrecta. Inténtalo de nuevo." + _correctAnswer + selectedAnswer);
-
-            ChangeButtonColor(buttonIndex, Color.red);
+            ChangeButtonColor(buttonIndex, new Color(0.9f, 0.3f, 0.3f));
             Invoke("RestoreButtonColor", 2f);
-            // PreviousScene();
             ShowStats();
         }
-        /* string selectedAnswer = _buttons[buttonIndex].GetComponentInChildren<TextMeshProUGUI>().text;
-
-         _correctAnswer = GameManager.Instance.responseList[GameManager.Instance.randomQuestionIndex].CorrectOption;
-
-         if (selectedAnswer == _correctAnswer)
-         {
-             Debug.Log("¡Respuesta correcta!");
-             ChangeButtonColor(buttonIndex, Color.green);
-             Invoke("RestoreButtonColor", 2f);
-             GameManager.Instance._answers.Clear();
-             Invoke("NextAnswer", 2f);
-
-         }
-         else
-         {
-             Debug.Log("Respuesta incorrecta. Inténtalo de nuevo." + _correctAnswer + selectedAnswer);
-
-             ChangeButtonColor(buttonIndex, Color.red);
-             Invoke("RestoreButtonColor", 2f);
-         }*/
-
-
+        GameManager.Instance._answers.Clear();
     }
 
     private void ChangeButtonColor(int buttonIndex, Color color)
@@ -184,26 +150,15 @@ public class UIManagment : MonoBehaviour
 
     public void OnTimerExpired()
     {
-        Debug.Log("El tiempo para responder se agotooooooo.");
-        // PreviousScene();
         ShowStats();
-        Debug.Log("stats guardadas OnTimerExpired");
     }
-
-    /* public async void PreviousScene()
-     {
-         Destroy(GameManager.Instance);
-         Destroy(UIManagment.Instance);
-         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
-         await   GameManager.Instance.SavePlayerStats(points, questionAnswered);
-     }*/
 
     public async void ShowStats()
     {
-        questionImage.gameObject.SetActive(false);
-        if (statsSaved) return; // Evitar ejecución repetida
+        if (statsSaved) return; // Evita ejecución repetida
         statsSaved = true;
 
+        questionImage.gameObject.SetActive(false);
         timerUI.isTimerRunning = false;
 
         float currentPoints = PointsUI.GetPoints();
@@ -233,17 +188,14 @@ public class UIManagment : MonoBehaviour
 
         await GameManager.Instance.SavePlayerStats(points, questionAnswered);
 
-        // await Task.Delay(3000);
         Destroy(GameManager.Instance);
         Destroy(UIManagment.Instance);
     }
 
     public void ShowRankings()
     {
-        // Si quieres mostrar el ranking global
-        RankingUI.Instance.DisplayGlobalRanking();
 
-        // O mostrar el ranking de una trivia específica (por ejemplo, con el ID 1)
+        RankingUI.Instance.DisplayGlobalRanking();
 
         RankingUI.Instance.DisplayTriviaRanking(1);
     }

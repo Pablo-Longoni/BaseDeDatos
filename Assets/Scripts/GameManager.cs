@@ -61,7 +61,6 @@ public class GameManager : MonoBehaviour
         StartTrivia();
 
         queryCalled = false;
-
     }
 
     void StartTrivia()
@@ -73,75 +72,36 @@ public class GameManager : MonoBehaviour
 
     }
 
-    /* public void CategoryAndQuestionQuery(bool isCalled)
-     {
-         isCalled = UIManagment.Instance.queryCalled;
-
-         if (!isCalled)
-         {
-             // Encuentra un índice no respondido
-             randomQuestionIndex = GetNextQuestionIndex();
-
-             // Si no quedan preguntas, maneja el fin de la trivia
-             if (randomQuestionIndex == -1)
-             {
-                 Debug.Log("¡No quedan más preguntas por responder!");
-                 // Lógica para terminar la trivia (mostrar resultados, etc.)
-
-             }
-
-             //_questionText.text = GameManager.Instance.responseList[randomQuestionIndex].QuestionText;
-             _correctAnswer = GameManager.Instance.responseList[randomQuestionIndex].CorrectOption;
-
-             //agrego a la lista de answers las 3 answers
-
-             _answers.Add(GameManager.Instance.responseList[randomQuestionIndex].Answer1);
-             _answers.Add(GameManager.Instance.responseList[randomQuestionIndex].Answer2);
-             _answers.Add(GameManager.Instance.responseList[randomQuestionIndex].Answer3);
-
-             // la mixeo con el método Shuffle (ver script Shuffle List)
-
-             // _answers.Shuffle();
-
-             // asigno estos elementos a los textos de los botones
-
-             for (int i = 0; i < UIManagment.Instance._buttons.Length; i++)
-             {
-                 UIManagment.Instance._buttons[i].GetComponentInChildren<TextMeshProUGUI>().text = _answers[i];
-
-                 int index = i; // Captura el valor actual de i en una variable local -- SINO NO FUNCA!
-
-                 UIManagment.Instance._buttons[i].onClick.AddListener(() => UIManagment.Instance.OnButtonClick(index));
-             }
-
-             // Marca la pregunta como respondida
-             answeredQuestions.Add(randomQuestionIndex);
-
-             UIManagment.Instance.queryCalled = true;
-         }
-
-     }*/
-
     public void CategoryAndQuestionQuery(bool isCalled)
     {
-      //  Debug.Log("CategoryAndQuestionQuery ha sido llamada.");
         isCalled = UIManagment.Instance.queryCalled;
         if (!isCalled)
         {
+            //Devuelve indice de pregunta no respondida
             randomQuestionIndex = GetNextQuestionIndex();
-
             if (randomQuestionIndex == -1)
             {
                 Debug.Log("¡No quedan más preguntas por responder!");
                 return;
             }
 
+            GameManager.Instance._answers.Clear();
+            //La respuesta correcta se alamecena en correctAnswer
             _correctAnswer = GameManager.Instance.responseList[randomQuestionIndex].CorrectOption;
 
+            //Se agregan las tres posibles respuestas
             _answers.Add(GameManager.Instance.responseList[randomQuestionIndex].Answer1);
             _answers.Add(GameManager.Instance.responseList[randomQuestionIndex].Answer2);
             _answers.Add(GameManager.Instance.responseList[randomQuestionIndex].Answer3);
 
+            // Depuración: Verificar el tamaño y contenido de las respuestas
+            Debug.Log($"Respuestas añadidas. Tamaño de _answers: {GameManager.Instance._answers.Count}");
+            foreach (var answer in GameManager.Instance._answers)
+            {
+                Debug.Log($"Respuesta: {answer}");
+            }
+
+            //Se recorre el arreglo de buttons y se le asignan las posibles respuestas
             for (int i = 0; i < UIManagment.Instance._buttons.Length; i++)
             {
                 UIManagment.Instance._buttons[i].GetComponentInChildren<TextMeshProUGUI>().text = _answers[i];
@@ -150,9 +110,11 @@ public class GameManager : MonoBehaviour
                 UIManagment.Instance._buttons[i].onClick.AddListener(() => UIManagment.Instance.OnButtonClick(index));
             }
 
+            //Se añade randomQuestion al conjunto answeredQuestion
             answeredQuestions.Add(randomQuestionIndex);
             UIManagment.Instance.queryCalled = true;
 
+            //Se llama a loadImage para cargar la imagen
             UIManagment.Instance.LoadImageForCurrentQuestion();
         }
     }
@@ -189,7 +151,7 @@ public class GameManager : MonoBehaviour
             clientSupabase = new Supabase.Client(supabaseUrl, supabaseKey);
         }
 
-        // Recuperar el ID del usuario desde PlayerPrefs
+        // Recuperar  id del usuario desde PlayerPrefs
         string userId = PlayerPrefs.GetString("UserId", null);
         points = PlayerPrefs.GetFloat("Points");
         questionsAnswered = PlayerPrefs.GetInt("QuestionsAnswered");
@@ -228,7 +190,7 @@ public class GameManager : MonoBehaviour
              .From<Stat>()
              .Select("*")
              .Order(stat => stat.points, Postgrest.Constants.Ordering.Descending)
-             .Limit(10) // Obtener los 10 mejores
+             .Limit(10) 
              .Get();
 
          return response.Models;
@@ -252,20 +214,20 @@ public class GameManager : MonoBehaviour
     {
         int user_Id = int.Parse(userId);
         var response = await clientSupabase
-            .From<usuarios>()  // Asumiendo que tienes una clase Usuario que representa la tabla "usuarios"
+            .From<usuarios>()  
             .Select("username")
-            .Where(u => u.id == user_Id)  // Asumiendo que "id" es la columna primaria
-            .Single(); // Esto obtiene solo un resultado, si el usuario existe
+            .Where(u => u.id == user_Id)  
+            .Single(); 
 
 
         if (response != null)
         {
-            return response.username;  // Devuelve el nombre de usuario
+            return response.username;  
         }
         else
         {
             Debug.LogError("No se pudo encontrar el nombre del usuario.");
-            return "Desconocido";  // En caso de error, devuelve un nombre por defecto
+            return "Desconocido";  
         }
     }
 } 

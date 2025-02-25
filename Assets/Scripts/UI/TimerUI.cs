@@ -104,6 +104,8 @@ public class TimerUI : MonoBehaviour
         UpdateBar();
     }
 
+
+    //Barra timer
     private void UpdateBar()
     {
         float normalizedTime = Mathf.Clamp(timer / maxTime, 0f, 1f);
@@ -111,11 +113,11 @@ public class TimerUI : MonoBehaviour
 
         if (newWidth <= 0)
         {
-            timerBar.gameObject.SetActive(false); // Oculta la barra al llegar a 0
+            timerBar.gameObject.SetActive(false); 
         }
         else
         {
-            timerBar.gameObject.SetActive(true); // Asegura que se vea si el tiempo > 0
+            timerBar.gameObject.SetActive(true); 
             timerBar.sizeDelta = new Vector2(newWidth, timerBar.sizeDelta.y);
         }
     }
@@ -126,15 +128,17 @@ public class TimerUI : MonoBehaviour
         float minAlpha = 0.3f;
         float duration = 0.5f; // Duración de cada fade
 
+        //barra parpadee cuando el tiempo es menor a 5
         while (isTimerRunning && timer <= 5 && timer > 0)
         {
-            // Fade out (de maxAlpha a minAlpha)
+            // Fade out 
             yield return StartCoroutine(FadeAlpha(maxAlpha, minAlpha, duration));
-            // Fade in (de minAlpha a maxAlpha)
+            // Fade in 
             yield return StartCoroutine(FadeAlpha(minAlpha, maxAlpha, duration));
         }
     }
 
+    //Controlar transicion de transparencia
     private IEnumerator FadeAlpha(float from, float to, float duration)
     {
         float elapsed = 0f;
@@ -147,7 +151,7 @@ public class TimerUI : MonoBehaviour
             TimerBar.color = new Color(currentColor.r, currentColor.g, currentColor.b, newAlpha);
             yield return null;
         }
-        // Asegurarse de que quede exactamente en el valor final
+        
         TimerBar.color = new Color(currentColor.r, currentColor.g, currentColor.b, to);
     }
 

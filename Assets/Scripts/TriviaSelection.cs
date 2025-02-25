@@ -48,6 +48,7 @@ public class TriviaSelection : MonoBehaviour
 
     }
 
+    //LLena dropdown con las categorias disponibles
     void PopulateDropdown()
     {
         

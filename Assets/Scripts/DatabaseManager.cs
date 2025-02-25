@@ -17,7 +17,7 @@ public class DatabaseManager : MonoBehaviour
     //UI
     [SerializeField] private 
 
-
+    
     async void Start()
     {
         clientSupabase = new Supabase.Client(supabaseUrl, supabaseKey);
@@ -29,6 +29,7 @@ public class DatabaseManager : MonoBehaviour
         await LoadTriviaData(index);
     }
 
+    //Traer preguntas de una trivia especifica
     async Task LoadTriviaData(int index)
     {
         var response = await clientSupabase
